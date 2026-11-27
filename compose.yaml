@@ -5,7 +5,7 @@ services:
     build: .
     restart: unless-stopped
     ports:
-      - "${SONORO_BIND:-0.0.0.0}:${SONORO_PORT:-8080}:8080"
+      - "${SONORO_BIND:-0.0.0.0}:${SONORO_PORT:-8017}:8080"
     healthcheck:
       test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/"]
       interval: 10s
