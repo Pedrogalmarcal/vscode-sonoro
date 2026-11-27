@@ -1,0 +1,823 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#080d16">
+  <title>VS Code Sonoro</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --background: #080d16;
+      --ink: #071323;
+      --muted: #b3c9e9;
+      --accent: #205cc2;
+      --panel: #142238;
+      --editor: #090f19;
+      --editor-line: #273c5a;
+      --editor-text: #eff6ff;
+      --editor-muted: #adc4e3;
+      --frame: #456994;
+      --shadow: #10284b;
+      --focus: #91c5ff;
+      --highlight: #8ed0ff;
+      --mono: 'Cascadia Mono', Consolas, 'Liberation Mono', monospace;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      padding: clamp(24px, 6vw, 88px) clamp(12px, 4vw, 48px) 36px;
+      color: var(--editor-text);
+      background: radial-gradient(circle, #20324d 1px, transparent 1.4px) 0 0 / 22px 22px,
+        var(--background);
+    }
+
+    main { width: min(100%, 67rem); margin-inline: auto; }
+
+    .intro {
+      display: flex;
+      align-items: center;
+      gap: clamp(12px, 2.5vw, 24px);
+      margin: 0 0 clamp(20px, 4vw, 36px);
+    }
+
+    .brand {
+      display: grid;
+      flex: none;
+      place-items: center;
+      width: clamp(50px, 8vw, 76px);
+      aspect-ratio: 1;
+      border: 2px solid var(--ink);
+      border-radius: 20%;
+      background: var(--highlight);
+      box-shadow: 3px 4px var(--shadow);
+      transform: rotate(-7deg);
+    }
+
+    .brand span {
+      width: 65%;
+      height: 57%;
+      background: var(--ink);
+      clip-path: polygon(0 42%, 13% 42%, 13% 60%, 24% 60%, 24% 23%, 37% 23%,
+        37% 79%, 45% 79%, 45% 0, 58% 0, 58% 100%, 69% 100%, 69% 31%,
+        82% 31%, 82% 58%, 100% 58%, 100% 73%, 74% 73%, 74% 45%, 71% 45%,
+        71% 100%, 48% 100%, 48% 21%, 46% 21%, 46% 93%, 26% 93%, 26% 38%,
+        25% 38%, 25% 74%, 0 74%);
+    }
+
+    h1, h2, p { margin: 0; }
+
+    h1 {
+      font-size: clamp(1.8rem, 6vw, 4.55rem);
+      font-weight: 900;
+      line-height: .99;
+      letter-spacing: -.075em;
+      text-wrap: balance;
+    }
+
+    .intro p {
+      margin-top: 9px;
+      color: var(--muted);
+      font-size: clamp(.95rem, 2.25vw, 1.17rem);
+      font-weight: 600;
+    }
+
+    .studio {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(16.75rem, .49fr);
+      overflow: hidden;
+      border: 2px solid var(--frame);
+      border-radius: 22px;
+      background: var(--panel);
+      box-shadow: 6px 8px var(--shadow);
+    }
+
+    .editor-panel {
+      display: grid;
+      grid-area: 1 / 1;
+      grid-template-rows: auto minmax(16rem, 1fr) auto;
+      min-width: 0;
+      color: var(--editor-text);
+      background: var(--editor);
+    }
+
+    .filebar {
+      display: flex;
+      align-items: center;
+      padding: 15px 24px;
+      min-height: 65px;
+      border-bottom: 1px solid var(--editor-line);
+      background: var(--panel);
+    }
+
+    .filename {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      color: var(--editor-text);
+      font: 600 .9rem var(--mono);
+    }
+
+    .filename::before { content: '</>'; color: var(--highlight); font-weight: bold; }
+
+    .writing {
+      position: relative;
+      display: grid;
+      grid-template-columns: 15px minmax(0, 1fr);
+      padding: 20px 20px 20px 14px;
+    }
+
+    .editor-rail {
+      width: 3px;
+      margin: 7px 0 4px;
+      border-radius: 3px;
+      background: var(--editor-line);
+    }
+
+    textarea {
+      display: block;
+      width: 100%;
+      min-height: 16rem;
+      resize: none;
+      padding: 0 4px;
+      border: 0;
+      border-radius: 5px;
+      outline: none;
+      color: inherit;
+      background: transparent;
+      caret-color: var(--highlight);
+      font: 500 clamp(1rem, 2.3vw, 1.23rem) / 1.65 var(--mono);
+      tab-size: 2;
+    }
+
+    textarea::placeholder { color: var(--editor-muted); opacity: 1; }
+    .writing:focus-within .editor-rail { background: var(--highlight); }
+
+    .editor-footer {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px 18px;
+      padding: 14px 20px;
+      border-top: 1px solid var(--editor-line);
+      color: var(--editor-muted);
+      font-size: .85rem;
+    }
+
+    .editor-footer span { display: inline-flex; align-items: center; gap: 6px; }
+
+    kbd {
+      padding: 3px 6px;
+      border: 1px solid var(--frame);
+      border-bottom-width: 2px;
+      border-radius: 5px;
+      color: var(--editor-text);
+      font: 600 .73rem var(--mono);
+    }
+
+    .celebration {
+      position: absolute;
+      right: 12px;
+      bottom: 12px;
+      left: 12px;
+      display: grid;
+      justify-items: center;
+      pointer-events: none;
+    }
+
+    .celebration p:not(:empty) {
+      max-width: 100%;
+      padding: 8px 16px;
+      border: 2px solid var(--ink);
+      border-radius: 9px;
+      color: var(--ink);
+      background: var(--highlight);
+      box-shadow: 3px 3px 0 #205cc2;
+      font-weight: 800;
+      text-align: center;
+      transform: rotate(-2deg);
+    }
+
+    .confetti {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .confetti i {
+      position: absolute;
+      top: 76%;
+      left: 50%;
+      width: 8px;
+      height: 12px;
+      border-radius: 2px;
+    }
+
+    .sound-panel {
+      display: flex;
+      grid-area: 1 / 2;
+      flex-direction: column;
+      gap: 17px;
+      padding: 20px;
+      border-left: 2px solid var(--editor-line);
+    }
+
+    .sound-controls { display: grid; gap: 10px; }
+
+    button, input[type='range'], .mode { touch-action: manipulation; }
+
+    button {
+      min-height: 46px;
+      padding: 9px 12px;
+      border: 2px solid var(--ink);
+      border-radius: 10px;
+      color: #fff;
+      background: var(--accent);
+      box-shadow: 0 3px var(--ink);
+      font: 750 1rem / 1.2 'Segoe UI', system-ui, sans-serif;
+      cursor: pointer;
+    }
+
+    button:hover { background: #17499f; }
+    button:active { box-shadow: 0 1px var(--ink); }
+    button:disabled { opacity: .7; cursor: not-allowed; }
+
+    :focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+    textarea:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
+
+    .volume { display: flex; align-items: center; gap: 10px; font-size: .88rem; }
+    .volume label { font-weight: 700; }
+    .volume output { min-width: 3ch; color: var(--muted); text-align: right; }
+
+    input[type='range'] {
+      min-width: 0;
+      min-height: 44px;
+      margin: 0;
+      flex: 1;
+      accent-color: var(--highlight);
+      cursor: pointer;
+    }
+
+    .audio-error {
+      color: var(--highlight);
+      font-size: .88rem;
+      line-height: 1.4;
+    }
+
+    .audio-error:empty { display: none; }
+
+    fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
+
+    legend {
+      margin-bottom: 9px;
+      padding: 0;
+      font-size: 1.04rem;
+      font-weight: 800;
+      letter-spacing: -.02em;
+    }
+
+    .modes { display: grid; gap: 8px; }
+
+    .mode {
+      position: relative;
+      display: grid;
+      grid-template-columns: 34px minmax(0, 1fr) 16px;
+      align-items: center;
+      gap: 9px;
+      min-height: 55px;
+      padding: 6px 9px;
+      border: 1px solid var(--frame);
+      border-radius: 9px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .mode:hover { border-color: var(--focus); }
+
+    .mode:has(:checked) {
+      border-color: var(--mode-color);
+      background: var(--mode-tint);
+      box-shadow: inset 0 0 0 1px var(--mode-color);
+    }
+
+    .mode:has(:focus-visible) { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+    .mode input {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+    }
+
+    .mode-icon {
+      display: grid;
+      align-items: center;
+      justify-items: center;
+      align-content: center;
+      width: 34px;
+      height: 34px;
+      border: 1px solid var(--ink);
+      border-radius: 7px;
+      color: var(--ink);
+      background: var(--mode-color);
+      font: bold 1rem var(--mono);
+      line-height: 1;
+    }
+
+    .mode-icon .piano-icon {
+      width: 17px;
+      height: 15px;
+      border: 2px solid currentColor;
+      border-radius: 2px;
+      background: repeating-linear-gradient(90deg, transparent 0 3px, currentColor 3px 5px);
+    }
+
+    .peido .mode-icon { font-size: .75rem; }
+
+    .laser-icon {
+      width: 17px;
+      height: 3px;
+      border-radius: 2px;
+      background: currentColor;
+      box-shadow: 0 5px 0 -.5px currentColor;
+      transform: rotate(-35deg);
+    }
+
+    .mode-icon .robot-icon {
+      position: relative;
+      width: 18px;
+      height: 13px;
+      border: 2px solid currentColor;
+      border-radius: 3px;
+    }
+
+    .robot-icon::before {
+      position: absolute;
+      top: -6px;
+      left: 6px;
+      width: 2px;
+      height: 4px;
+      background: currentColor;
+      content: '';
+    }
+
+    .robot-icon::after {
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 2px;
+      height: 3px;
+      background: currentColor;
+      box-shadow: 6px 0 currentColor;
+      content: '';
+    }
+
+    .mode-name { display: block; line-height: 1.17; }
+    .mode small { display: block; color: var(--muted); font-size: .78rem; font-weight: 600; }
+
+    .indicator {
+      width: 15px;
+      height: 15px;
+      border: 1px solid var(--focus);
+      border-radius: 50%;
+      background: var(--panel);
+    }
+
+    :checked ~ .indicator { border: 4px solid var(--mode-color); }
+
+    [data-mode='robo'], .robo { --mode-color: #73d7ff; --mode-tint: #163a50; }
+    [data-mode='piano'], .piano { --mode-color: #95b5ff; --mode-tint: #23365c; }
+    [data-mode='peido'], .peido { --mode-color: #60b8ff; --mode-tint: #153852; }
+    [data-mode='laser'], .laser { --mode-color: #a3edff; --mode-tint: #184052; }
+    [data-mode='bits'], .bits { --mode-color: #78a4ff; --mode-tint: #1d345b; }
+
+    .waveform {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(3px, 1vw, 8px);
+      min-height: 70px;
+      margin-top: auto;
+      padding: 8px;
+      overflow: hidden;
+      border: 1px solid var(--ink);
+      border-radius: 9px;
+      background: var(--editor);
+    }
+
+    .waveform i {
+      width: 7px;
+      height: var(--height);
+      border-radius: 3px;
+      opacity: .65;
+      background: var(--mode-color);
+      transform: scaleY(.55);
+      transition: transform 170ms ease-out, opacity 170ms ease-out;
+    }
+
+    .waveform.playing i { opacity: 1; transform: scaleY(var(--beat, 1)); transition-duration: 55ms; }
+
+    @media (max-width: 690px) {
+      .studio { grid-template-columns: minmax(0, 1fr); }
+      .sound-panel {
+        grid-area: 1 / 1;
+        display: grid;
+        gap: 10px;
+        padding: 12px;
+        border-left: 0;
+        border-bottom: 2px solid var(--editor-line);
+      }
+      .sound-controls { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+      .audio-error { grid-column: 1 / -1; }
+      .modes { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .mode { grid-template-columns: minmax(0, 1fr) 13px; gap: 3px; padding: 6px; }
+      .mode-icon { grid-column: 1 / -1; width: 30px; height: 30px; }
+      .mode small { display: none; }
+      .indicator { width: 13px; height: 13px; }
+      .waveform { display: none; }
+      .editor-panel { grid-area: 2 / 1; grid-template-rows: auto minmax(13rem, 1fr) auto; }
+      .filebar { min-height: 44px; padding: 8px 14px; }
+      .writing { padding-top: 14px; }
+      textarea { min-height: 13rem; }
+      .editor-footer { padding-inline: 14px; gap: 7px 12px; }
+    }
+
+    @media (max-width: 350px) {
+      .sound-controls { grid-template-columns: minmax(0, 1fr); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header class="intro">
+      <div class="brand" aria-hidden="true"><span></span></div>
+      <div>
+        <h1>VS Code Sonoro</h1>
+        <p>Um editor que faz barulho</p>
+      </div>
+    </header>
+
+    <div class="studio">
+      <section class="sound-panel" aria-label="Controles de som">
+        <div class="sound-controls">
+          <button id="sound" type="button" disabled>Ligar o som</button>
+          <div class="volume">
+            <label for="volume">Volume</label>
+            <input id="volume" type="range" min="0" max="100" value="45">
+            <output id="volume-value" for="volume">45%</output>
+          </div>
+          <p id="audio-error" class="audio-error" role="status">Abra este arquivo no navegador para ouvir os sons.</p>
+        </div>
+
+        <fieldset>
+          <legend>Modo de som</legend>
+          <div class="modes">
+            <label class="mode robo">
+              <input type="radio" name="mode" value="robo">
+              <span class="mode-icon" aria-hidden="true"><span class="robot-icon"></span></span>
+              <span><span class="mode-name">Robô</span><small>Bipes e blopes</small></span>
+              <span class="indicator" aria-hidden="true"></span>
+            </label>
+            <label class="mode piano">
+              <input type="radio" name="mode" value="piano">
+              <span class="mode-icon" aria-hidden="true"><span class="piano-icon"></span></span>
+              <span><span class="mode-name">Piano</span><small>Notas musicais</small></span>
+              <span class="indicator" aria-hidden="true"></span>
+            </label>
+            <label class="mode peido">
+              <input type="radio" name="mode" value="peido" checked>
+              <span class="mode-icon" aria-hidden="true">Prr!</span>
+              <span><span class="mode-name">Peido</span><small>Prrrt! Pof!</small></span>
+              <span class="indicator" aria-hidden="true"></span>
+            </label>
+            <label class="mode laser">
+              <input type="radio" name="mode" value="laser">
+              <span class="mode-icon" aria-hidden="true"><span class="laser-icon"></span></span>
+              <span><span class="mode-name">Laser</span><small>Pius espaciais</small></span>
+              <span class="indicator" aria-hidden="true"></span>
+            </label>
+            <label class="mode bits">
+              <input type="radio" name="mode" value="bits">
+              <span class="mode-icon" aria-hidden="true">8b</span>
+              <span><span class="mode-name">8 bits</span><small>Sons de fliperama</small></span>
+              <span class="indicator" aria-hidden="true"></span>
+            </label>
+          </div>
+        </fieldset>
+
+        <div id="waveform" class="waveform" data-mode="peido" aria-hidden="true">
+          <i style="--height:12px"></i><i style="--height:18px"></i><i style="--height:26px"></i>
+          <i style="--height:38px"></i><i style="--height:23px"></i><i style="--height:47px"></i>
+          <i style="--height:35px"></i><i style="--height:52px"></i><i style="--height:28px"></i>
+          <i style="--height:43px"></i><i style="--height:25px"></i><i style="--height:16px"></i>
+          <i style="--height:10px"></i>
+        </div>
+      </section>
+
+      <section class="editor-panel" aria-label="Editor">
+        <div class="filebar"><label class="filename" for="editor">meu-programa.txt</label></div>
+        <div class="writing">
+          <div class="editor-rail" aria-hidden="true"></div>
+          <textarea id="editor" placeholder="Digite aqui para tocar.&#10;Aperte Enter para soltar confete!" spellcheck="false"
+            autocomplete="off" autocapitalize="off" aria-describedby="key-guide"></textarea>
+          <div id="confetti" class="confetti" aria-hidden="true"></div>
+          <div class="celebration"><p id="celebration" role="status"></p></div>
+        </div>
+        <div id="key-guide" class="editor-footer">
+          <span><kbd>Espaço</kbd> boing</span>
+          <span><kbd>Backspace</kbd> rebobina</span>
+          <span><kbd>Enter</kbd> tadá!</span>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    'use strict';
+
+    const editor = document.querySelector('#editor');
+    const soundButton = document.querySelector('#sound');
+    const volume = document.querySelector('#volume');
+    const volumeValue = document.querySelector('#volume-value');
+    const audioError = document.querySelector('#audio-error');
+    const waveform = document.querySelector('#waveform');
+    const bars = waveform.querySelectorAll('i');
+    const celebration = document.querySelector('#celebration');
+    const confetti = document.querySelector('#confetti');
+    const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+    const sampleCache = new Map();
+
+    let mode = document.querySelector('input[name="mode"]:checked').value;
+    let audio;
+    let master;
+    let soundOn = false;
+    let waveTimer;
+    let celebrationTimer;
+
+    function setVolume() {
+      volumeValue.value = volume.value + '%';
+      if (soundOn) {
+        audioError.textContent = volume.valueAsNumber === 0 ? 'Aumente o volume para ouvir.' : '';
+      }
+      if (master) {
+        const gain = soundOn ? 0.54 * volume.valueAsNumber / 100 : 0;
+        master.gain.setTargetAtTime(gain, audio.currentTime, 0.015);
+      }
+    }
+
+    function updateSoundButton() {
+      setVolume();
+      soundButton.textContent = soundOn ? 'Desligar o som' : 'Ligar o som';
+    }
+
+    async function resumeAudio() {
+      let timer;
+      try {
+        await Promise.race([
+          audio.resume(),
+          new Promise((_, reject) => {
+            timer = setTimeout(() => reject(new Error('O navegador não liberou o áudio.')), 1500);
+          })
+        ]);
+        if (audio.state !== 'running') throw new Error('O áudio está suspenso.');
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+
+    function tone(type, from, to, duration, level, delay = 0) {
+      const when = audio.currentTime + delay;
+      const oscillator = audio.createOscillator();
+      const envelope = audio.createGain();
+
+      oscillator.type = type;
+      oscillator.frequency.setValueAtTime(from, when);
+      oscillator.frequency.exponentialRampToValueAtTime(to, when + duration);
+      envelope.gain.setValueAtTime(0.0001, when);
+      envelope.gain.exponentialRampToValueAtTime(level, when + 0.012);
+      envelope.gain.exponentialRampToValueAtTime(0.0001, when + duration);
+
+      oscillator.connect(envelope);
+      envelope.connect(master);
+      oscillator.start(when);
+      oscillator.stop(when + duration);
+      oscillator.onended = () => { oscillator.disconnect(); envelope.disconnect(); };
+    }
+
+    function fart(pitch, duration) {
+      const key = pitch + '/' + duration;
+      let buffer = sampleCache.get(key);
+
+      if (!buffer) {
+        const rate = audio.sampleRate;
+        buffer = audio.createBuffer(1, Math.ceil(rate * duration), rate);
+        const samples = buffer.getChannelData(0);
+        let phase = 0;
+        let noise = 0;
+
+        // A queda de tom e a pulsação irregular dão o efeito de "prrrt".
+        for (let i = 0; i < samples.length; i++) {
+          const time = i / rate;
+          const progress = time / duration;
+          const flutter = Math.sin(2 * Math.PI * time * 19 + 0.8 * Math.sin(time * 43));
+          const frequency = pitch * (1.22 - 0.62 * progress + 0.11 * flutter);
+          phase += 2 * Math.PI * frequency / rate;
+          noise = 0.8 * noise + 0.2 * (Math.random() * 2 - 1);
+          const buzz = 0.63 * Math.sin(phase) + 0.22 * Math.sin(phase * 2)
+            + 0.13 * Math.sin(phase * 3) + 0.26 * noise;
+          const attack = Math.min(1, time / 0.016);
+          const decay = Math.pow(1 - progress, 0.72);
+          samples[i] = 0.85 * buzz * attack * decay * (0.67 + 0.33 * flutter);
+        }
+
+        sampleCache.set(key, buffer);
+      }
+
+      const source = audio.createBufferSource();
+      source.buffer = buffer;
+      source.connect(master);
+      source.start();
+      source.onended = () => source.disconnect();
+    }
+
+    function playSound(kind, character = 'a') {
+      if (!soundOn || audio.state !== 'running' || volume.valueAsNumber === 0) return;
+
+      const code = character.toLowerCase().normalize('NFD').codePointAt(0);
+      const step = code >= 97 && code <= 122 ? code - 97 : code % 26;
+      const note = 220 * Math.pow(2, step / 12);
+      const specialWave = mode === 'robo' || mode === 'bits' ? 'square' : 'triangle';
+
+      if (kind === 'enter') {
+        if (mode === 'peido') fart(109, 0.32);
+        [523.25, 659.25, 783.99, 1046.5].forEach((frequency, index) => {
+          tone(specialWave, frequency, frequency, index === 3 ? 0.36 : 0.16, 0.35,
+            (mode === 'peido' ? 0.13 : 0) + index * 0.085);
+        });
+        return;
+      }
+
+      if (kind === 'space') {
+        tone(specialWave, 140, 285, 0.13, 0.35);
+        tone('triangle', 285, 75, 0.22, 0.32, 0.08);
+        if (mode === 'peido') fart(82, 0.32);
+        return;
+      }
+
+      if (kind === 'delete') {
+        tone(specialWave, 700, 105, 0.2, 0.33);
+        tone('sine', 480, 87, 0.14, 0.19, 0.055);
+        if (mode === 'peido') fart(120, 0.16);
+        return;
+      }
+
+      if (mode === 'peido') {
+        fart(76 + step * 2.5, 0.19 + (step % 3) * 0.065);
+      } else if (mode === 'robo') {
+        tone('square', note * 0.65, note * 0.49, 0.1, 0.28);
+        tone('triangle', note * 1.3, note * 1.5, 0.08, 0.19, 0.043);
+      } else if (mode === 'laser') {
+        tone('sawtooth', note * 3, note * 0.55, 0.18, 0.28);
+        tone('triangle', note * 2, note * 0.42, 0.19, 0.16, 0.055);
+      } else if (mode === 'bits') {
+        tone('square', note, note, 0.07, 0.23);
+        tone('square', note * 1.5, note * 1.5, 0.1, 0.2, 0.052);
+        tone('triangle', note * 2, note * 2, 0.12, 0.15, 0.104);
+      } else {
+        tone('triangle', note, note, 0.42, 0.42);
+        tone('sine', note * 2, note * 2, 0.15, 0.12);
+      }
+    }
+
+    function moveWave() {
+      if (reducedMotion.matches) return;
+
+      for (const bar of bars) {
+        bar.style.setProperty('--beat', (0.6 + Math.random() * 0.65).toFixed(2));
+      }
+      waveform.classList.add('playing');
+      clearTimeout(waveTimer);
+      waveTimer = setTimeout(() => waveform.classList.remove('playing'), 180);
+    }
+
+    function approveProgram() {
+      celebration.textContent = 'Programa aprovado!';
+      clearTimeout(celebrationTimer);
+      celebrationTimer = setTimeout(() => { celebration.textContent = ''; }, 2300);
+
+      if (reducedMotion.matches || !Element.prototype.animate) return;
+
+      confetti.replaceChildren();
+      const colors = ['#eff6ff', '#8ed0ff', '#60b8ff', '#3b83e5', '#73d7ff'];
+      const spread = confetti.clientWidth * 0.48;
+      const rise = confetti.clientHeight * 0.68;
+
+      for (let i = 0; i < 38; i++) {
+        const piece = document.createElement('i');
+        const x = (Math.random() * 2 - 1) * spread;
+        const y = (0.35 + Math.random() * 0.65) * rise;
+        const spin = (Math.random() * 2 - 1) * 540;
+        piece.style.backgroundColor = colors[i % colors.length];
+        confetti.append(piece);
+        const animation = piece.animate([
+          { transform: 'translate(0, 0) rotate(0deg)', opacity: 0 },
+          { transform: 'translate(' + x * 0.55 + 'px, ' + -y + 'px) rotate(' + spin * 0.45 + 'deg)',
+            opacity: 1, offset: 0.46 },
+          { transform: 'translate(' + x + 'px, 96px) rotate(' + spin + 'deg)', opacity: 0 }
+        ], { duration: 650 + Math.random() * 520, easing: 'cubic-bezier(.15,.68,.38,1)' });
+        animation.onfinish = () => piece.remove();
+      }
+    }
+
+    function respond(kind, character) {
+      playSound(kind, character);
+      moveWave();
+      if (kind === 'enter') approveProgram();
+    }
+
+    soundButton.addEventListener('click', async () => {
+      if (!soundOn) {
+        soundButton.disabled = true;
+        try {
+          if (!audio || audio.state === 'closed') {
+            const AudioEngine = window.AudioContext || window.webkitAudioContext;
+            audio = new AudioEngine();
+            master = audio.createGain();
+            master.gain.value = 0;
+            const compressor = audio.createDynamicsCompressor();
+            compressor.threshold.value = -14;
+            compressor.ratio.value = 8;
+            master.connect(compressor).connect(audio.destination);
+            audio.addEventListener('statechange', () => {
+              if (audio.state === 'running' || !soundOn) return;
+              soundOn = false;
+              updateSoundButton();
+              audioError.textContent = 'O navegador pausou o áudio. Clique em Ligar o som.';
+            });
+          }
+
+          await resumeAudio();
+          soundOn = true;
+        } catch {
+          audioError.textContent = 'O som não abriu. Abra o HTML no Chrome ou no Edge e tente de novo.';
+          return;
+        } finally {
+          soundButton.disabled = false;
+        }
+      } else {
+        soundOn = false;
+        audioError.textContent = '';
+      }
+
+      updateSoundButton();
+      if (soundOn) respond('note', 'c');
+    });
+
+    volume.addEventListener('input', setVolume);
+
+    for (const input of document.querySelectorAll('input[name="mode"]')) {
+      input.addEventListener('change', () => {
+        mode = input.value;
+        waveform.dataset.mode = mode;
+        respond('note', 'c');
+      });
+      input.addEventListener('click', () => {
+        if (mode === input.value) respond('note', 'c');
+      });
+    }
+
+    editor.addEventListener('input', (event) => {
+      if (event.isComposing) return;
+
+      if (event.inputType === 'insertLineBreak' || event.inputType === 'insertParagraph') {
+        respond('enter');
+      } else if (event.inputType === 'deleteContentBackward') {
+        respond('delete');
+      } else if (event.inputType === 'insertText' && event.data) {
+        const character = Array.from(event.data).at(-1);
+        respond(character === ' ' ? 'space' : 'note', character);
+      }
+    });
+
+    editor.addEventListener('keydown', (event) => {
+      // Backspace no começo do texto não gera um evento de input.
+      if (event.key === 'Backspace' && !event.isComposing
+          && editor.selectionStart === 0 && editor.selectionEnd === 0) {
+        respond('delete');
+      }
+    });
+
+    audioError.textContent = '';
+    soundButton.disabled = false;
+  </script>
+</body>
+</html>
